@@ -1,6 +1,7 @@
 import torch
 from torch.nn import Conv2d, Sequential, ModuleList, BatchNorm2d
 from torch import nn
+import torchvision
 from ..nn.mobilenetv3 import MobileNetV3_Large, MobileNetV3_Small, Block, hswish
 
 from .ssd import SSD
@@ -55,8 +56,13 @@ def create_mobilenetv3_large_ssd_lite(num_classes, width_mult=1.0, use_batch_nor
                extras, classification_headers, regression_headers, is_test=is_test, config=config)
 
 
-def create_mobilenetv3_small_ssd_lite(num_classes, width_mult=1.0, use_batch_norm=True, onnx_compatible=False, is_test=False):
-    base_net = MobileNetV3_Small().features
+def create_mobilenetv3_small_ssd_lite(num_classes, width_mult=1.0, use_batch_norm=True, onnx_compatible=False, is_test=False, pretrained=False, quantized=False):
+    if pretrained:
+        base_net = torchvision.models.mobilenet_v3_small(pretrained=True).features
+        source_layer_indexes = [9, 15]
+    else:
+        base_net = MobileNetV3_Small().features
+        source_layer_indexes = [11, 17]
 
     source_layer_indexes = [ 11, 17 ]
     extras = ModuleList([
@@ -68,25 +74,25 @@ def create_mobilenetv3_small_ssd_lite(num_classes, width_mult=1.0, use_batch_nor
 
     regression_headers = ModuleList([
         SeperableConv2d(in_channels=round(48 * width_mult), out_channels=6 * 4,
-                        kernel_size=3, padding=1, onnx_compatible=False),
-        SeperableConv2d(in_channels=576, out_channels=6 * 4, kernel_size=3, padding=1, onnx_compatible=False),
-        SeperableConv2d(in_channels=512, out_channels=6 * 4, kernel_size=3, padding=1, onnx_compatible=False),
-        SeperableConv2d(in_channels=256, out_channels=6 * 4, kernel_size=3, padding=1, onnx_compatible=False),
-        SeperableConv2d(in_channels=256, out_channels=6 * 4, kernel_size=3, padding=1, onnx_compatible=False),
+                        kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
+        SeperableConv2d(in_channels=576, out_channels=6 * 4, kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
+        SeperableConv2d(in_channels=512, out_channels=6 * 4, kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
+        SeperableConv2d(in_channels=256, out_channels=6 * 4, kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
+        SeperableConv2d(in_channels=256, out_channels=6 * 4, kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
         Conv2d(in_channels=64, out_channels=6 * 4, kernel_size=1),
     ])
 
     classification_headers = ModuleList([
-        SeperableConv2d(in_channels=round(48 * width_mult), out_channels=6 * num_classes, kernel_size=3, padding=1),
-        SeperableConv2d(in_channels=576, out_channels=6 * num_classes, kernel_size=3, padding=1),
-        SeperableConv2d(in_channels=512, out_channels=6 * num_classes, kernel_size=3, padding=1),
-        SeperableConv2d(in_channels=256, out_channels=6 * num_classes, kernel_size=3, padding=1),
-        SeperableConv2d(in_channels=256, out_channels=6 * num_classes, kernel_size=3, padding=1),
+        SeperableConv2d(in_channels=round(48 * width_mult), out_channels=6 * num_classes, kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
+        SeperableConv2d(in_channels=576, out_channels=6 * num_classes, kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
+        SeperableConv2d(in_channels=512, out_channels=6 * num_classes, kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
+        SeperableConv2d(in_channels=256, out_channels=6 * num_classes, kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
+        SeperableConv2d(in_channels=256, out_channels=6 * num_classes, kernel_size=3, padding=1, onnx_compatible=onnx_compatible),
         Conv2d(in_channels=64, out_channels=6 * num_classes, kernel_size=1),
     ])
 
     return SSD(num_classes, base_net, source_layer_indexes,
-               extras, classification_headers, regression_headers, is_test=is_test, config=config)
+               extras, classification_headers, regression_headers, is_test=is_test, config=config, quantized=quantized)
 
 
 def create_mobilenetv3_ssd_lite_predictor(net, candidate_size=200, nms_method=None, sigma=0.5, device=torch.device('cpu')):

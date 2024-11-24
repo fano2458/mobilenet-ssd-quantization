@@ -145,7 +145,6 @@ class MobileNetV3_Large(nn.Module):
         return out
 
 
-
 class MobileNetV3_Small(nn.Module):
     def __init__(self, num_classes=1000):
         super(MobileNetV3_Small, self).__init__()
@@ -213,12 +212,3 @@ class MobileNetV3_Small(nn.Module):
         out = self.linear4(out)
         return out
 
-
-
-def test():
-    net = MobileNetV3_Small()
-    x = torch.randn(2,3,224,224)
-    y = net(x)
-    print(y.size())
-
-# test()

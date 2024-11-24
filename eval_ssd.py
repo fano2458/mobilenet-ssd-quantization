@@ -10,7 +10,7 @@ import numpy as np
 import logging
 import sys
 from vision.ssd.mobilenet_v2_ssd_lite import create_mobilenetv2_ssd_lite, create_mobilenetv2_ssd_lite_predictor
-from vision.ssd.mobilenetv3_ssd_lite import create_mobilenetv3_large_ssd_lite, create_mobilenetv3_small_ssd_lite
+from vision.ssd.mobilenetv3_ssd_lite import create_mobilenetv3_large_ssd_lite, create_mobilenetv3_small_ssd_lite, create_mobilenetv3_ssd_lite_predictor
 
 
 parser = argparse.ArgumentParser(description="SSD Evaluation on VOC Dataset.")
@@ -131,29 +131,38 @@ if __name__ == '__main__':
         net = create_mobilenetv1_ssd(len(class_names), is_test=True)
     elif args.net == 'mb1-ssd-lite':
         net = create_mobilenetv1_ssd_lite(len(class_names), is_test=True)
+    elif args.net == 'mb1-torchscript':
+        net = torch.jit.load(args.trained_model)
     elif args.net == 'mb2-ssd-lite':
         net = create_mobilenetv2_ssd_lite(len(class_names), width_mult=args.mb2_width_mult, is_test=True)
+    elif args.net == 'mb2-torchscript':
+        net = torch.jit.load(args.trained_model)
     elif args.net == 'mb3-large-ssd-lite':
         net = create_mobilenetv3_large_ssd_lite(len(class_names), is_test=True)
     elif args.net == 'mb3-small-ssd-lite':
         net = create_mobilenetv3_small_ssd_lite(len(class_names), is_test=True)
+    elif args.net == 'mb3-torchscript':
+        net = torch.jit.load(args.trained_model)
     else:
         logging.fatal("The net type is wrong. It should be one of vgg16-ssd, mb1-ssd and mb1-ssd-lite.")
         parser.print_help(sys.stderr)
         sys.exit(1)
 
     timer.start("Load Model")
-    net.load(args.trained_model)
+    if args.net != 'mb1-torchscript' and args.net != 'mb2-torchscript' and args.net != 'mb2-torchscript':
+        net.load(args.trained_model)
     net = net.to(DEVICE)
     print(f'It took {timer.end("Load Model")} seconds to load the model.')
-    if args.net == 'mb1-ssd':
+    if args.net == 'mb1-ssd' or args.net == 'mb1-torchscript':
         predictor = create_mobilenetv1_ssd_predictor(net, nms_method=args.nms_method, device=DEVICE)
     elif args.net == 'mb1-ssd-lite':
         predictor = create_mobilenetv1_ssd_lite_predictor(net, nms_method=args.nms_method, device=DEVICE)
-    elif args.net == 'mb2-ssd-lite' or args.net == "mb3-large-ssd-lite" or args.net == "mb3-small-ssd-lite":
+    elif args.net == 'mb2-ssd-lite' or args.net == "mb2-torchscript":
         predictor = create_mobilenetv2_ssd_lite_predictor(net, nms_method=args.nms_method, device=DEVICE)
+    elif args.net == "mb3-large-ssd-lite" or args.net == "mb3-small-ssd-lite" or args.net == "mb3-torchscript":
+        predictor = create_mobilenetv3_ssd_lite_predictor(net, nms_method=args.nms_method, device=DEVICE)
     else:
-        logging.fatal("The net type is wrong. It should be one of vgg16-ssd, mb1-ssd and mb1-ssd-lite.")
+        logging.fatal("The net type is wrong. It should be one of mb1-ssd, mb1-ssd-lite, mb2-ssd-lite, mb3-large-ssd-lite, mb3-small-ssd-lite, or torchscript versions")
         parser.print_help(sys.stderr)
         sys.exit(1)
 

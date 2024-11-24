@@ -1,5 +1,6 @@
 import torch.nn as nn
 import math
+import torch
 
 # Modified from https://github.com/tonylins/pytorch-mobilenet-v2/blob/master/MobileNetV2.py.
 # In this version, Relu6 is replaced with Relu to make it ONNX compatible.
@@ -96,9 +97,11 @@ class InvertedResidual(nn.Module):
 
     def forward(self, x):
         if self.use_res_connect:
-            return x + self.conv(x)
-        else:
-            return self.conv(x)
+            if x.is_quantized:
+                return torch.ops.quantized.add(x, self.conv(x), scale=x.q_scale(), zero_point=x.q_zero_point())
+            else:
+                return x + self.conv(x)
+        return self.conv(x)
 
 
 class MobileNetV2(nn.Module):

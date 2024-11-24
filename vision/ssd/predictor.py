@@ -4,6 +4,8 @@ from ..utils import box_utils
 from .data_preprocessing import PredictionTransform
 from ..utils.misc import Timer
 
+from torch.utils.mobile_optimizer import optimize_for_mobile
+
 
 class Predictor:
     def __init__(self, net, size, mean=0.0, std=1.0, nms_method=None,
@@ -69,3 +71,22 @@ class Predictor:
         picked_box_probs[:, 2] *= width
         picked_box_probs[:, 3] *= height
         return picked_box_probs[:, :4], torch.tensor(picked_labels), picked_box_probs[:, 4]
+    
+    def trace(self, image, script_path=None, onnx=False, mob_script_path=None):
+        image = self.transform(image)
+        images = image.unsqueeze(0)
+        images = images.to(self.device)
+        self.net.to('cpu')
+        self.net.eval()
+        with torch.no_grad():
+            self.timer.start()
+            module = torch.jit.trace(self.net, images)
+            module_opt = optimize_for_mobile(module)
+            print("Trace time: ", self.timer.end())
+        if onnx:
+                torch.onnx.export(self.net, images, "exp.onnx")
+        if script_path is not None:
+            torch.jit.save(module, script_path)
+        if mob_script_path is not None:
+            module_opt._save_for_lite_interpreter(mob_script_path)
+            

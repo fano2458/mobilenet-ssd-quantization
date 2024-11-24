@@ -16,9 +16,7 @@ from vision.ssd.mobilenet_v2_ssd_lite import create_mobilenetv2_ssd_lite
 from vision.ssd.mobilenetv3_ssd_lite import create_mobilenetv3_large_ssd_lite, create_mobilenetv3_small_ssd_lite
 from vision.datasets.voc_dataset import VOCDataset
 from vision.nn.multibox_loss import MultiboxLoss
-from vision.ssd.config import vgg_ssd_config
 from vision.ssd.config import mobilenetv1_ssd_config
-from vision.ssd.config import squeezenet_ssd_config
 from vision.ssd.data_preprocessing import TrainAugmentation, TestTransform
 
 parser = argparse.ArgumentParser(
@@ -34,7 +32,7 @@ parser.add_argument('--balance_data', action='store_true',
 
 
 parser.add_argument('--net', default="vgg16-ssd",
-                    help="The network architecture, it can be mb1-ssd, mb1-lite-ssd, mb2-ssd-lite, mb3-large-ssd-lite, mb3-small-ssd-lite or vgg16-ssd.")
+                    help="The network architecture, it can be mb1-ssd, mb1-lite-ssd, mb2-ssd-lite, mb3-large-ssd-lite, mb3-small-ssd-lite")
 parser.add_argument('--freeze_base_net', action='store_true',
                     help="Freeze base net layers.")
 parser.add_argument('--freeze_net', action='store_true',
@@ -118,7 +116,7 @@ def train(loader, net, criterion, optimizer, device, debug_steps=100, epoch=-1):
 
         optimizer.zero_grad()
         confidence, locations = net(images)
-        regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)  # TODO CHANGE BOXES
+        regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)
         loss = regression_loss + classification_loss
         loss.backward()
         optimizer.step()
