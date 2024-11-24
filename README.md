@@ -1,21 +1,8 @@
 # Single Shot MultiBox Detector Implementation in Pytorch
 
 This repo implements [SSD (Single Shot MultiBox Detector)](https://arxiv.org/abs/1512.02325). The implementation is heavily influenced by the projects [ssd.pytorch](https://github.com/amdegroot/ssd.pytorch) and [Detectron](https://github.com/facebookresearch/Detectron).
-The design goal is modularity and extensibility.
 
-Currently, it has MobileNetV1, MobileNetV2, and VGG based SSD/SSD-Lite implementations. 
-
-It also has out-of-box support for retraining on Google Open Images dataset.
-
-![Example of Mobile SSD](readme_ssd_example.jpg  "Example of Mobile SSD(Courtesy of https://www.pexels.com/@mirit-assaf-299757 for the image.")
-
-## Dependencies
-1. Python 3.6+
-2. OpenCV
-3. Pytorch 1.0 or Pytorch 0.4+
-4. Caffe2
-5. Pandas
-6. Boto3 if you want to train models on the Google OpenImages Dataset.
+Currently, it has MobileNetV1, MobileNetV2, and MobileNetV3 based SSD implementations. 
 
 ## Download models
 
@@ -274,8 +261,3 @@ python train_ssd.py --datasets ~/data/VOC0712/VOC2007/ ~/data/VOC0712/VOC2012/ -
 ```bash
 python eval_ssd.py --net vgg16-ssd  --dataset ~/data/VOC0712/test/VOC2007/ --trained_model models/vgg16-ssd-Epoch-115-Loss-2.819455094383535.pth --label_file models/voc-model-labels.txt
 ```
-
-## TODO
-
-1. Resnet34 Based Model.
-2. BatchNorm Fusion.
