@@ -84,7 +84,8 @@ class Predictor:
             module_opt = optimize_for_mobile(module)
             print("Trace time: ", self.timer.end())
         if onnx:
-                torch.onnx.export(self.net, images, "exp.onnx")
+                torch.onnx.export(self.net, images, script_path.replace(".pt", ".onnx"),
+                                  output_names=["scores", "boxes"], input_names=["image"])
         if script_path is not None:
             torch.jit.save(module, script_path)
         if mob_script_path is not None:
